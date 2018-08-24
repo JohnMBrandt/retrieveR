@@ -1,0 +1,44 @@
+---
+title: "Workflow for using retrieveR"
+author: "John Brandt"
+date: "`r Sys.Date()`"
+output: html_document
+vignette: >
+  %\VignetteIndexEntry{Workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+## Info
+
+This vignette walks the user through applying the neural embedding NLP approach to a novel set of PDF documents. We use a sample corpus of 10 peer-reviewed academic journal articles about restoration. 
+
+## Downloading data
+
+```{r}
+library(retrieveR)
+install_mac()
+#install_windows()
+download_example()
+```
+
+```{r, warning = F, message = F, echo=FALSE, eval=F}
+corpus <- prep_documents("pdfs")
+```
+
+```{r, warning = F, message = F, echo = F, eval=F}
+create_report(query="land tenure", data = corpus, interactive = F, thresh = 0.51)
+```
+
+
+```{r, echo=FALSE, warning = F, message = F, eval=F}
+htmltools::includeHTML("land_tenure.html")
+```

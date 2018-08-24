@@ -6,7 +6,7 @@
 #' @examples
 #' create_locations()
 
-create_locations <- function(corpus, embedding) {
+create_locations <- function(corpus, embedding = "embeddings.bin") {
   library(magrittr)
   cat("\nReading in data", "\n")
   data <- corpus
@@ -37,13 +37,14 @@ create_locations <- function(corpus, embedding) {
   }
   close(pb)
   data$sentences <- bundled
-
   cat("Calculating idf", "\n")
   nopunc <- gsub("[!.,%0-9:;]", "", data$sentences)
   nopunc <- do.call("rbind", strsplit(paste(nopunc, collapse=" "), split = " "))
   list_of_words <- as.data.frame(t(nopunc)) %>%
     dplyr::group_by(V1) %>%
     dplyr::summarise(n=n())
+
+  head(list_of_words)
 
   cat("Calculating paragraph-level neural embeddings \n")
   pb <- txtProgressBar(min = 0, max = nrow(data), style = 3)
@@ -76,5 +77,4 @@ create_locations <- function(corpus, embedding) {
   cat("Saving the word embeddings to 'embeddings.rds'\n")
   saveRDS(locations, "embeddings.rds")
   cat("There are now", nrow(data), "observations!\n")
-  return(locations)
 }

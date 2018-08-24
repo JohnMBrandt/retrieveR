@@ -4,75 +4,51 @@
 
 retrieveR is a system for automating information retrieval from a corpus of documents. 
 
-## Installation
+## Installation instructions
 
-retrieveR relies on rJava, which requires bit-compability with your Java installation. You need at least `Java 8` or `OpenJDK 1.8`.
-
-If you have not used devtools before in R, you must install it by running
+R can be downloaded from [this link](https://cran.r-project.org/bin/windows/base/). Once it is downloaded, open up the 32-bit version (i386, as WRI computers only seem to have 32-bit version of Java). Then, you can proceed to installing the package by running the following lines of code. Copy and paste them one at a time and press enter.
 
 ```r
 install.packages("devtools")
-```
-
-Devtools relies on the most current version of Rtools to also be [installed](https://cran.r-project.org/bin/windows/Rtools/). I am currently working on a release update that will not depend on Rtools. 
-
-```r
 library(devtools)
 install_github("wri/retrieveR")
 ```
 
-If the installation of retrieveR fails because R cannot find Rtools, try the below:
+## Downloading data
 
-```r
-library(devtools)
-assignInNamespace("version_info", c(devtools::version_info, list("3.5" = list(version_min = "3.3.0", version_max = "99.99.99", path = "bin"))), "devtools")
+Next, we load up the package into R using `library`. Depending on your operating system, you then need to run either `install_mac` or `install_windows` - these functions will get the Java dependencies to extract text from images, as well as install the necessary components to run neural networks.
+
+Finally, the `download_example` function will download the example PDFs.
+
+```
+library(retrieveR)
+install_mac()
+install_windows()
+download_example()
 ```
 
+## Prepping documents for querying
 
-## Usage
-
-There are four main functions that comprise the bulk of the functionality of retrieveR: `run_ocr`, `make_corpus`, `create_locations`, and `interactive_report`. 
-
-### run_ocr
+The `prep_documents` function will strip text from the PDFs, clean up the results, and calculate neural weights. These can be turned off by specifying `ocr = F`, `clean = F`, or `weights = F`. retrieveR can process html documents by setting `type = "html"`.The function takes a path to the folder of documents - in this case they are stored in a folder called `pdfs`. This pathing is local to the directory that R is running in - this can be printed with `getwd()` and changed with `setwd()`. 
 
 ```r
-run_ocr("path/to/folder")
+corpus <- prep_documents("pdfs")
 ```
 
-Splits each PDF into separate PDFs by page and then extracts text using the `rtika` interface to the open-source OCR toolkit with embedded page layout analysis.
+## Querying documents
 
-### make_corpus
+The `create_report` function takes the following arguments:
 
-```r
-corpus <- make_corpus("path/to/folder")
-```
-
-This function does the following:
- 
-+ Split documents by paragraph
-+ Remove tables, figures, and citations
-+ Subset documents to english
-+ Fix spelling errors in a contextually-sensitive manner
-+ Bundle common phrases into n-grams
-+ Extract page number from each paragraph
-+ Assemble a dataframe specifying the paragraph and any relevant metadata
-
-### create_locations
-
-```r
-download_embeddings()
-locations <- create_locations(corpus, "path/to/embeddings.bin")
-```
+1. query: Query phrase within quotations.
+2. data: name that the output of `prep_documents` is stored to.
 
 This uses a pre-trained neural embedding to calculate weights for each paragraph. Calling `download_embeddings()` will download a pre-trained embedding to the working directory as `embeddings.bin`. This pre-trained embedding was trained on over 1,000 environmental policy documents from more than 40 nations and 50 NGOs and development aid agencies. 
 
 The `prep_wordvec` and `create_wordvec` functions may be used to create your own neural embedding, if need be.
 
-### interactive_report
-
-```
-interactive_report(country = "Kenya", query = "barriers to restoration",
-  data = corpus, locations = locations)
+```r
+create_report(country = "Kenya", query = "barriers to restoration",
+  data = corpus)
 ```
 
 The format for querying the corpus and generating a report is interactive and iterative. RetrieveR prompts the user with a candidate set of relevant words and phrases. The ones for "barriers to restoration", for instance, are:
@@ -93,14 +69,12 @@ solutions                    landscape_restoration        overcome
 removing                     identify                    
 ```
 
-At this stage, you can add or remove words that you find relevant or not-relevant to your query. It is important to note that adding words to your query at this point is preferred. It is easier to draw a plane in 300 dimensional space with 6 points than it is with 2 or 1.
-
-After finalizing a query, the function returns all paragraphs ranked by their cosine similarity. The final step is to determine the cutoff threshold for inclusion. This varies widely between queries - broad queries have a lower threshold than narrow queries - and thus requires user input. 
+At this stage, you can add words that you find relevant to your query. After finalizing a query, paragraphs are ranked by their cosine similarity. The final step is to determine the cutoff threshold for inclusion. This varies widely between queries - broad queries have a lower threshold than narrow queries - and thus requires user input. 
 
 To do this, the algorithm begins with a high threshold (only retaining very similar paragraphs). The user is presented with the two paragraphs that are just barely not retained, and then prompted to determine whether they are relevant. If they are, the threshold is lowered and the process is repeated until no relevant paragraphs are missed.
 
-Finally, `interactive_report` makes use of `rmarkdown` and `ggplot2` to create a heatmap of topic density by document and a report listing each relevant paragraph sorted by document and labelled with its page number. 
+Finally, `create_report` makes use of `rmarkdown` and `ggplot2` to create a heatmap of topic density by document and a report listing each relevant paragraph sorted by document and labelled with its page number. 
 
 ## Examples
 
-See the vignette [here](https://github.com/wri/retrieveR/blob/master/vignettes/example.md).
+See the vignette [here](http://htmlpreview.github.io/?https://raw.githubusercontent.com/wri/retrieveR/master/demo.html).
